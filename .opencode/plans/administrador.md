@@ -1,10 +1,82 @@
+# Plan — Unificar Administrador con Usuarios
+
+## 1. Backend — `controllers/usuariocontroller.js`
+
+Agregar ANTES de `loginUsuario`:
+
+```js
+const actualizarUsuario = async (req, res) => {
+  try {
+    const { nombre, correo, rol, password } = req.body;
+    const update = {};
+    if (nombre) update.nombre = nombre;
+    if (correo) update.correo = correo;
+    if (rol) update.rol = rol;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      update.password = await bcrypt.hash(password, salt);
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(
+      req.params.id, update,
+      { new: true, select: "-password" }
+    );
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+    res.json({ mensaje: "Usuario actualizado", usuario });
+  } catch (error) {
+    res.status(400).json({ mensaje: "Error al actualizar usuario", error });
+  }
+};
+
+const eliminarUsuario = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByIdAndDelete(req.params.id);
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    res.json({ mensaje: "Usuario eliminado" });
+  } catch (error) {
+    res.status(500).json({ mensaje: "Error al eliminar usuario", error });
+  }
+};
+```
+
+Y en `module.exports` agregar:
+```js
+  actualizarUsuario,
+  eliminarUsuario,
+```
+
+## 2. Backend — `routes/usuarioroutes.js`
+
+Agregar antes de `module.exports`:
+```js
+router.put("/:id", authMiddleware, actualizarUsuario);
+router.delete("/:id", authMiddleware, eliminarUsuario);
+```
+
+E importar en el require:
+```js
+const {
+  crearUsuario,
+  listarUsuarios,
+  loginUsuario,
+  actualizarUsuario,
+  eliminarUsuario
+} = require("../controllers/usuarioController");
+```
+
+## 3. Frontend — `pages/Usuarios.jsx`
+
+Reemplazar TODO el archivo con:
+
+```jsx
 import { useEffect, useState } from "react";
 import {
   TextField, Button, IconButton, InputAdornment,
   MenuItem, Snackbar, Alert, Card, CardContent,
   CircularProgress
 } from "@mui/material";
-import { Edit, Delete, Email, Person, Lock, AdminPanelSettings, Search } from "@mui/icons-material";
+import { Edit, Delete, Email, Person, Lock, AdminPanelSettings, PersonOutline, Search } from "@mui/icons-material";
 import api from "../services/api";
 
 export default function Usuarios() {
@@ -203,7 +275,7 @@ export default function Usuarios() {
                           background: u.rol === "admin" ? "#cce5ff" : "#e2e3e5",
                           color: u.rol === "admin" ? "#004085" : "#383d41",
                         }}>
-                          {u.rol === "admin" ? <AdminPanelSettings fontSize="small" /> : <Person fontSize="small" />}
+                          {u.rol === "admin" ? <AdminPanelSettings fontSize="small" /> : <PersonOutline fontSize="small" />}
                           {u.rol === "admin" ? "Admin" : "Usuario"}
                         </span>
                       </td>
@@ -243,3 +315,13 @@ export default function Usuarios() {
     </div>
   );
 }
+```
+
+## Resumen de cambios
+
+| Archivo | Cambio |
+|---|---|
+| `backend/src/controllers/usuariocontroller.js` | + `actualizarUsuario` (PUT), + `eliminarUsuario` (DELETE) |
+| `backend/src/routes/usuarioroutes.js` | Rutas `PUT /:id` y `DELETE /:id` con auth |
+| `frontend/src/pages/Usuarios.jsx` | Reemplazo completo: edición funcional, filtro "Solo admins", paginación, chips de rol, compatible con MUI v9 |
+```

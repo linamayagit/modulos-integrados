@@ -1,6 +1,5 @@
 const Contabilidad = require("../models/contabilidad");
 
-// Registrar movimiento
 exports.registrarMovimiento = async (req, res) => {
   try {
     const { tipo, monto, descripcion, responsable } = req.body;
@@ -12,22 +11,77 @@ exports.registrarMovimiento = async (req, res) => {
   }
 };
 
-// Listar movimientos
 exports.listarMovimientos = async (req, res) => {
   try {
-    const movimientos = await Contabilidad.find();
-    res.json(movimientos);
+    const { page = 1, limit = 15, tipo } = req.query;
+    const filter = {};
+    if (tipo) filter.tipo = tipo;
+
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      sort: { fecha: -1 },
+    };
+
+    const result = await Contabilidad.paginate(filter, options);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al listar movimientos", error });
+    res.status(500).json({ mensaje: "Error al listar movimientos", error: error.message });
   }
 };
 
-// Eliminar movimiento
+exports.actualizarMovimiento = async (req, res) => {
+  try {
+    const { tipo, monto, descripcion, responsable } = req.body;
+    const update = {};
+    if (tipo) update.tipo = tipo;
+    if (monto !== undefined) update.monto = monto;
+    if (descripcion) update.descripcion = descripcion;
+    if (responsable) update.responsable = responsable;
+
+    const movimiento = await Contabilidad.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!movimiento) return res.status(404).json({ mensaje: "Movimiento no encontrado" });
+
+    res.json({ mensaje: "Movimiento actualizado", movimiento });
+  } catch (error) {
+    res.status(400).json({ mensaje: "Error al actualizar movimiento", error });
+  }
+};
+
 exports.eliminarMovimiento = async (req, res) => {
   try {
-    await Contabilidad.findByIdAndDelete(req.params.id);
+    const movimiento = await Contabilidad.findByIdAndDelete(req.params.id);
+    if (!movimiento) return res.status(404).json({ mensaje: "Movimiento no encontrado" });
     res.json({ mensaje: "Movimiento eliminado" });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al eliminar movimiento", error });
+  }
+};
+
+exports.resumenContabilidad = async (req, res) => {
+  try {
+    const [ingresos, egresos] = await Promise.all([
+      Contabilidad.aggregate([
+        { $match: { tipo: "Ingreso" } },
+        { $group: { _id: null, total: { $sum: "$monto" }, count: { $sum: 1 } } }
+      ]),
+      Contabilidad.aggregate([
+        { $match: { tipo: "Egreso" } },
+        { $group: { _id: null, total: { $sum: "$monto" }, count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const totalIngresos = ingresos[0]?.total || 0;
+    const totalEgresos = egresos[0]?.total || 0;
+
+    res.json({
+      totalIngresos,
+      totalEgresos,
+      balance: totalIngresos - totalEgresos,
+      cantidadIngresos: ingresos[0]?.count || 0,
+      cantidadEgresos: egresos[0]?.count || 0,
+    });
+  } catch (error) {
+    res.status(500).json({ mensaje: "Error al obtener resumen", error: error.message });
   }
 };

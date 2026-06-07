@@ -1,10 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const estiloBoton = {
-    background: "#3EB489",
+  const esActivo = (path) => location.pathname === path;
+
+  const estiloBoton = (path) => ({
+    background: esActivo(path) ? "#2a8f6a" : "#3EB489",
     color: "white",
     border: "none",
     padding: "10px 20px",
@@ -13,7 +16,8 @@ function Navbar() {
     fontSize: "16px",
     fontWeight: "bold",
     margin: "0 5px",
-  };
+    transition: "background 0.2s",
+  });
 
   const estiloNav = {
     background: "#666",
@@ -26,15 +30,45 @@ function Navbar() {
 
   return (
     <nav style={estiloNav}>
-      <button style={estiloBoton} onClick={() => navigate("/usuarios")}>
-        Usuarios
+      <button style={estiloBoton("/home")} onClick={() => navigate("/home")}>
+        Inicio
       </button>
 
-      <button style={estiloBoton} onClick={() => navigate("/vehiculos")}>
+      <button style={estiloBoton("/registros")} onClick={() => navigate("/registros")}>
+        Registros
+      </button>
+
+      <button style={estiloBoton("/vehiculos")} onClick={() => navigate("/vehiculos")}>
         Vehículos
       </button>
 
-      <button style={estiloBoton} onClick={() => navigate("/")}>
+      <button style={estiloBoton("/parqueaderos")} onClick={() => navigate("/parqueaderos")}>
+        Parqueaderos
+      </button>
+
+      <button style={estiloBoton("/tickets")} onClick={() => navigate("/tickets")}>
+        Tickets
+      </button>
+
+      <button style={estiloBoton("/tarifas")} onClick={() => navigate("/tarifas")}>
+        Tarifas
+      </button>
+
+      <button style={estiloBoton("/contabilidad")} onClick={() => navigate("/contabilidad")}>
+        Contabilidad
+      </button>
+
+      <button style={estiloBoton("/usuarios")} onClick={() => navigate("/usuarios")}>
+        Usuarios
+      </button>
+
+      <button
+        style={{ ...estiloBoton(""), background: "#c0392b" }}
+        onClick={() => {
+          localStorage.removeItem("token");
+          navigate("/");
+        }}
+      >
         Cerrar Sesión
       </button>
     </nav>

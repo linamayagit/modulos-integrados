@@ -4,6 +4,8 @@ import {
   Button,
   IconButton,
   InputAdornment,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   Visibility,
@@ -11,59 +13,40 @@ import {
   Email,
   Lock,
 } from "@mui/icons-material";
+import { Link } from "react-router-dom";
 import logo from "../assets/logo_parqueadero.jpeg";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log("ENTRO A HANDLESUBMIT");
+    setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            correo: email,
-            contraseña: password,
-          }),
-        }
-      );
+      const response = await api.post("/usuarios/login", {
+        correo: email,
+        password: password,
+      });
 
-      console.log("RESPUESTA RECIBIDA");
-
-      const data = await response.json();
-
-      console.log("Respuesta del servidor:", data);
-
-      if (response.ok) {
-        alert("✅ Login exitoso");
-
-         {
-          localStorage.setItem("token", data.token);
-          console.log("VOY A REDIRIGIR A USUARIOS");
-          navigate("/usuarios");
-        }
-
-        // Aquí después podrás redirigir
-        // navigate("/dashboard");
-      } else {
-        alert("❌ " + data.mensaje);
-      }
+      localStorage.setItem("token", response.data.token);
+      navigate("/home");
     } catch (error) {
-      console.error("ERROR:", error);
-      alert("❌ No se pudo conectar con el servidor");
+      const mensaje = error.response?.data?.mensaje || "No se pudo conectar con el servidor";
+      setSnackbar({ open: true, message: mensaje, severity: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -169,16 +152,34 @@ export default function Login() {
               type="submit"
               fullWidth
               variant="contained"
+              disabled={loading}
               sx={{
                 mt: 2,
                 backgroundColor: "#87CEEB",
               }}
             >
-              Iniciar sesión
+              {loading ? "Ingresando..." : "Iniciar sesión"}
             </Button>
           </form>
+
+          <div style={{ textAlign: "center", marginTop: "16px" }}>
+            <Link to="/register" style={{ color: "#3EB489", textDecoration: "none" }}>
+              ¿No tienes cuenta? Regístrate
+            </Link>
+          </div>
         </div>
       </div>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

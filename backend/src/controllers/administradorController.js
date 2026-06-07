@@ -1,10 +1,13 @@
+const bcrypt = require("bcryptjs");
 const Administrador = require("../models/administrador");
 
 // Registrar administrador
 exports.registrarAdministrador = async (req, res) => {
   try {
     const { nombre, correo, contraseña } = req.body;
-    const nuevoAdmin = new Administrador({ nombre, correo, contraseña });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(contraseña, salt);
+    const nuevoAdmin = new Administrador({ nombre, correo, contraseña: hashedPassword });
     await nuevoAdmin.save();
     res.status(201).json({ mensaje: "Administrador registrado", administrador: nuevoAdmin });
   } catch (error) {

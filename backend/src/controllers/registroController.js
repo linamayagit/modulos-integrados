@@ -1,43 +1,73 @@
 const Registro = require("../models/registro");
+const Vehiculo = require("../models/vehiculo");
 
-// Registrar entrada
 exports.registrarEntrada = async (req, res) => {
   try {
     const { vehiculo, horaEntrada, observaciones } = req.body;
-    const nuevoRegistro = new Registro({ vehiculo, horaEntrada, observaciones });
+
+    const vehiculoExiste = await Vehiculo.findById(vehiculo);
+    if (!vehiculoExiste) {
+      return res.status(404).json({ mensaje: "Vehículo no encontrado" });
+    }
+
+    const activo = await Registro.findOne({ vehiculo, horaSalida: null });
+    if (activo) {
+      return res.status(400).json({ mensaje: "El vehículo ya tiene una entrada activa" });
+    }
+
+    const nuevoRegistro = new Registro({
+      vehiculo,
+      horaEntrada: horaEntrada || Date.now(),
+      observaciones,
+    });
     await nuevoRegistro.save();
-    res.status(201).json({ mensaje: "Entrada registrada", registro: nuevoRegistro });
+
+    const registroConPopulate = await Registro.findById(nuevoRegistro._id).populate("vehiculo");
+    res.status(201).json({ mensaje: "Entrada registrada", registro: registroConPopulate });
   } catch (error) {
     res.status(400).json({ mensaje: "Error al registrar entrada", error });
   }
 };
 
-// Registrar salida
 exports.registrarSalida = async (req, res) => {
   try {
     const { id } = req.params;
     const registro = await Registro.findById(id);
     if (!registro) return res.status(404).json({ mensaje: "Registro no encontrado" });
+    if (registro.horaSalida) return res.status(400).json({ mensaje: "Este registro ya tiene salida registrada" });
 
     registro.horaSalida = new Date();
     await registro.save();
-    res.json({ mensaje: "Salida registrada", registro });
+
+    const registroConPopulate = await Registro.findById(registro._id).populate("vehiculo");
+    res.json({ mensaje: "Salida registrada", registro: registroConPopulate });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al registrar salida", error });
   }
 };
 
-// Listar registros
 exports.listarRegistros = async (req, res) => {
   try {
-    const registros = await Registro.find().populate("vehiculo");
-    res.json(registros);
+    const { page = 1, limit = 20, activos, vehiculo } = req.query;
+
+    const filter = {};
+    if (activos === "true") filter.horaSalida = null;
+    if (vehiculo) filter.vehiculo = vehiculo;
+
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      sort: { createdAt: -1 },
+      populate: "vehiculo",
+    };
+
+    const result = await Registro.paginate(filter, options);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ mensaje: "Error al listar registros", error });
   }
 };
 
-// Eliminar registro
 exports.eliminarRegistro = async (req, res) => {
   try {
     await Registro.findByIdAndDelete(req.params.id);
