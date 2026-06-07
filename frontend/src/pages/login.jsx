@@ -13,6 +13,7 @@ import {
 } from "@mui/icons-material";
 import logo from "../assets/logo_parqueadero.jpeg";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,46 +25,20 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("ENTRO A HANDLESUBMIT");
-
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            correo: email,
-            contraseña: password,
-          }),
-        }
-      );
+      const res = await api.post("/auth/login", {
+        correo: email,
+        contraseña: password,
+      });
 
-      console.log("RESPUESTA RECIBIDA");
-
-      const data = await response.json();
-
-      console.log("Respuesta del servidor:", data);
-
-      if (response.ok) {
-        alert("✅ Login exitoso");
-
-         {
-          localStorage.setItem("token", data.token);
-          console.log("VOY A REDIRIGIR A USUARIOS");
-          navigate("/usuarios");
-        }
-
-        // Aquí después podrás redirigir
-        // navigate("/dashboard");
-      } else {
-        alert("❌ " + data.mensaje);
-      }
+      localStorage.setItem("token", res.data.token);
+      navigate("/usuarios");
     } catch (error) {
-      console.error("ERROR:", error);
-      alert("❌ No se pudo conectar con el servidor");
+      if (error.response) {
+        alert("❌ " + (error.response.data.mensaje || "Error de autenticación"));
+      } else {
+        alert("❌ No se pudo conectar con el servidor");
+      }
     }
   };
 

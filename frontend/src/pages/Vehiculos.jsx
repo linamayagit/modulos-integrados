@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { TextField, Button, IconButton, MenuItem } from "@mui/material";
 import { Delete, Edit } from "@mui/icons-material";
-import Navbar from "../components/Navbar";
+import api from "../services/api";
 
 export default function Vehiculos() {
   const [vehiculos, setVehiculos] = useState([]);
@@ -15,20 +15,20 @@ export default function Vehiculos() {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔥 CARGAR VEHÍCULOS
-  useEffect(() => {
-    cargarVehiculos();
-  }, []);
-
   const cargarVehiculos = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/vehiculos");
-      const data = await res.json();
-      setVehiculos(Array.isArray(data) ? data : []);
+      const res = await api.get("/vehiculos");
+      setVehiculos(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando vehículos:", err);
     }
   };
+
+  useEffect(() => {
+    api.get("/vehiculos")
+      .then((res) => setVehiculos(Array.isArray(res.data) ? res.data : []))
+      .catch((err) => console.error("Error cargando vehículos:", err));
+  }, []);
 
   // 🔥 CAMBIOS FORMULARIO
   const handleChange = (e) => {
@@ -44,19 +44,10 @@ export default function Vehiculos() {
 
     try {
       if (editId) {
-        await fetch(`http://localhost:3000/api/vehiculos/${editId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(nuevoVehiculo),
-        });
-
+        await api.put(`/vehiculos/${editId}`, nuevoVehiculo);
         setEditId(null);
       } else {
-        await fetch("http://localhost:3000/api/vehiculos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(nuevoVehiculo),
-        });
+        await api.post("/vehiculos", nuevoVehiculo);
       }
 
       setNuevoVehiculo({
@@ -75,10 +66,7 @@ export default function Vehiculos() {
   // 🔥 ELIMINAR
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:3000/api/vehiculos/${id}`, {
-        method: "DELETE",
-      });
-
+      await api.delete(`/vehiculos/${id}`);
       await cargarVehiculos();
     } catch (error) {
       console.error("Error eliminando vehículo:", error);
@@ -99,8 +87,6 @@ export default function Vehiculos() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Navbar />
-
       <h2>🚗 Vehículos</h2>
 
       {/* FORMULARIO */}

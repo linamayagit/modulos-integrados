@@ -3,12 +3,13 @@ const Vehiculo = require("../models/vehiculo");
 // Registrar vehículo
 exports.registrarVehiculo = async (req, res) => {
   try {
-    const { placa, tipo, color, propietario, horaEntrada } = req.body;
+    const { placa, tipo, color, modelo, propietario, horaEntrada } = req.body;
 
     const nuevoVehiculo = new Vehiculo({
       placa,
       tipo,
       color,
+      modelo,
       propietario,
       horaEntrada
     });

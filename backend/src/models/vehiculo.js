@@ -12,7 +12,9 @@ const vehiculoSchema = new mongoose.Schema({
   },
   color: {
     type: String,
-    required: true,
+  },
+  modelo: {
+    type: String,
   },
   propietario: {
     type: String,
@@ -20,7 +22,6 @@ const vehiculoSchema = new mongoose.Schema({
   },
   horaEntrada: {
     type: Date,
-    required: true,
   }
 }, { timestamps: true });
 

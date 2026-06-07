@@ -1,46 +1,50 @@
-import { useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 function Navbar() {
-  const navigate = useNavigate();
-
-  const estiloBoton = {
-    background: "#3EB489",
+  const estiloNav = {
+    background: "#40E0D0",
+    padding: "15px 30px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     color: "white",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "16px",
     fontWeight: "bold",
-    margin: "0 5px",
   };
 
-  const estiloNav = {
-    background: "#666",
-    padding: "15px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "10px",
+  const estiloLink = {
+    color: "white",
+    textDecoration: "none",
+    fontWeight: "bold",
+    paddingBottom: "5px",
   };
 
   return (
     <nav style={estiloNav}>
-      <button style={estiloBoton} onClick={() => navigate("/usuarios")}>
-        Usuarios
-      </button>
+      <div style={{ display: "flex", gap: "20px" }}>
+        <NavLink
+          to="/usuarios"
+          style={({ isActive }) => ({
+            ...estiloLink,
+            borderBottom: isActive ? "2px solid white" : "none",
+          })}
+        >
+          Usuarios
+        </NavLink>
 
-      <button style={estiloBoton} onClick={() => navigate("/vehiculos")}>
-        Vehículos
-      </button>
+        <NavLink
+          to="/vehiculos"
+          style={({ isActive }) => ({
+            ...estiloLink,
+            borderBottom: isActive ? "2px solid white" : "none",
+          })}
+        >
+          Vehículos
+        </NavLink>
+      </div>
 
-      <button style={estiloBoton} onClick={() => navigate("/")}>
-        Cerrar Sesión
-      </button>
+      <div>👤 Admin</div>
     </nav>
   );
 }
 
 export default Navbar;
-
-
