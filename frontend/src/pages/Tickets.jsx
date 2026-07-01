@@ -84,8 +84,10 @@ export default function Tickets() {
       setForm({ vehiculo: "", tarifa: "", horaEntrada: "" });
       await cargarDatos();
     } catch (err) {
-      const mensaje = err.response?.data?.mensaje || "Error al generar ticket";
-      setSnackbar({ open: true, message: mensaje, severity: "error" });
+      const data = err.response?.data;
+      const mensaje = data?.mensaje || "Error al generar ticket";
+      const detalle = data?.error ? ` (${data.error})` : "";
+      setSnackbar({ open: true, message: mensaje + detalle, severity: "error" });
     }
   };
 

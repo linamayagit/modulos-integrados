@@ -58,6 +58,44 @@ exports.eliminarMovimiento = async (req, res) => {
   }
 };
 
+exports.movimientosPorDia = async (req, res) => {
+  try {
+    const { dias = 7 } = req.query;
+    const desde = new Date();
+    desde.setDate(desde.getDate() - parseInt(dias, 10));
+    desde.setHours(0, 0, 0, 0);
+
+    const result = await Contabilidad.aggregate([
+      { $match: { fecha: { $gte: desde } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
+          ingresos: {
+            $sum: { $cond: [{ $eq: ["$tipo", "Ingreso"] }, "$monto", 0] },
+          },
+          egresos: {
+            $sum: { $cond: [{ $eq: ["$tipo", "Egreso"] }, "$monto", 0] },
+          },
+          cantidad: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: -1 } },
+    ]);
+
+    res.json(
+      result.map((r) => ({
+        fecha: r._id,
+        ingresos: r.ingresos,
+        egresos: r.egresos,
+        balance: r.ingresos - r.egresos,
+        cantidad: r.cantidad,
+      }))
+    );
+  } catch (error) {
+    res.status(500).json({ mensaje: "Error al obtener movimientos por día", error: error.message });
+  }
+};
+
 exports.resumenContabilidad = async (req, res) => {
   try {
     const [ingresos, egresos] = await Promise.all([

@@ -50,41 +50,39 @@ async function seed() {
 
     // ── Parqueaderos ──
     const parqueaderos = await Parqueadero.insertMany([
-      { nombre: "Parqueadero Central", direccion: "Calle 50 #20-30", capacidad: 100 },
-      { nombre: "Parqueadero Norte", direccion: "Av 68 #45-10", capacidad: 80 },
-      { nombre: "Parqueadero Sur", direccion: "Cra 30 #10-5", capacidad: 60 },
+      { nombre: "Parqueadero Principal", direccion: "Calle 50 #20-30", capacidad: 300 },
     ]);
-    console.log(`🏢 ${parqueaderos.length} parqueaderos creados`);
+    console.log(`🏢 ${parqueaderos.length} parqueadero creado`);
 
     // ── Tarifas ──
     const tarifas = await Tarifa.insertMany([
-      { tipoVehiculo: "Carro", precioHora: 5000, precioDia: 40000 },
+      { tipoVehiculo: "Auto", precioHora: 5000, precioDia: 40000 },
       { tipoVehiculo: "Moto", precioHora: 2000, precioDia: 15000 },
       { tipoVehiculo: "Bicicleta", precioHora: 1000, precioDia: 8000 },
-      { tipoVehiculo: "Camión", precioHora: 8000, precioDia: 60000 },
+      { tipoVehiculo: "Camioneta", precioHora: 8000, precioDia: 60000 },
     ]);
     console.log(`💰 ${tarifas.length} tarifas creadas`);
 
-    const tarifaCarro = tarifas[0];
+    const tarifaAuto = tarifas[0];
     const tarifaMoto = tarifas[1];
     const tarifaBici = tarifas[2];
-    const tarifaCamion = tarifas[3];
+    const tarifaCamioneta = tarifas[3];
 
     // ── Vehículos ──
     const ahora = new Date();
     const hace = (horas) => new Date(ahora.getTime() - horas * 3600000);
 
     const vehiculos = await Vehiculo.insertMany([
-      { placa: "ABC-123", tipo: "Carro", color: "Rojo", propietario: "Carlos Pérez", horaEntrada: hace(2) },
-      { placa: "DEF-456", tipo: "Carro", color: "Azul", propietario: "María Gómez", horaEntrada: hace(5) },
-      { placa: "GHI-789", tipo: "Carro", color: "Negro", propietario: "Pedro López", horaEntrada: hace(1) },
-      { placa: "JKL-012", tipo: "Carro", color: "Blanco", propietario: "Ana Martínez", horaEntrada: hace(48) },
+      { placa: "ABC-123", tipo: "Auto", color: "Rojo", propietario: "Carlos Pérez", horaEntrada: hace(2) },
+      { placa: "DEF-456", tipo: "Auto", color: "Azul", propietario: "María Gómez", horaEntrada: hace(5) },
+      { placa: "GHI-789", tipo: "Auto", color: "Negro", propietario: "Pedro López", horaEntrada: hace(1) },
+      { placa: "JKL-012", tipo: "Auto", color: "Blanco", propietario: "Ana Martínez", horaEntrada: hace(48) },
       { placa: "MNO-345", tipo: "Moto", color: "Roja", propietario: "Luis Ramírez", horaEntrada: hace(3) },
       { placa: "PQR-678", tipo: "Moto", color: "Negra", propietario: "Sofía Torres", horaEntrada: hace(6) },
       { placa: "STU-901", tipo: "Moto", color: "Azul", propietario: "Diego Castro", horaEntrada: hace(0.5) },
-      { placa: "VWX-234", tipo: "Camión", color: "Verde", propietario: "Jorge Medina", horaEntrada: hace(4) },
+      { placa: "VWX-234", tipo: "Camioneta", color: "Verde", propietario: "Jorge Medina", horaEntrada: hace(4) },
       { placa: "YZA-567", tipo: "Bicicleta", color: "Gris", propietario: "Laura Vega", horaEntrada: hace(1.5) },
-      { placa: "BCD-890", tipo: "Carro", color: "Plateado", propietario: "Roberto Ruiz", horaEntrada: hace(0.25) },
+      { placa: "BCD-890", tipo: "Auto", color: "Plateado", propietario: "Roberto Ruiz", horaEntrada: hace(0.25) },
     ]);
     console.log(`🚗 ${vehiculos.length} vehículos creados`);
 
@@ -111,17 +109,17 @@ async function seed() {
     // ── Tickets ──
     // 3 activos (sin horaSalida, sin total)
     const ticketsActivos = await Ticket.insertMany([
-      { numeroTicket: "TKT-0001", vehiculo: vehiculos[0]._id, tarifa: tarifaCarro._id, horaEntrada: hace(2), horaSalida: null, total: null },
+      { numeroTicket: "TKT-0001", vehiculo: vehiculos[0]._id, tarifa: tarifaAuto._id, horaEntrada: hace(2), horaSalida: null, total: null },
       { numeroTicket: "TKT-0002", vehiculo: vehiculos[4]._id, tarifa: tarifaMoto._id, horaEntrada: hace(3), horaSalida: null, total: null },
-      { numeroTicket: "TKT-0003", vehiculo: vehiculos[7]._id, tarifa: tarifaCamion._id, horaEntrada: hace(4), horaSalida: null, total: null },
+      { numeroTicket: "TKT-0003", vehiculo: vehiculos[7]._id, tarifa: tarifaCamioneta._id, horaEntrada: hace(4), horaSalida: null, total: null },
     ]);
 
     // 5 finalizados (con horaSalida y total calculado)
     const ticketsData = [
-      { nt: "TKT-0004", vehiculo: vehiculos[1]._id, tarifa: tarifaCarro._id, entrada: hace(8), salida: hace(2) },
+      { nt: "TKT-0004", vehiculo: vehiculos[1]._id, tarifa: tarifaAuto._id, entrada: hace(8), salida: hace(2) },
       { nt: "TKT-0005", vehiculo: vehiculos[5]._id, tarifa: tarifaMoto._id, entrada: hace(10), salida: hace(4) },
-      { nt: "TKT-0006", vehiculo: vehiculos[2]._id, tarifa: tarifaCarro._id, entrada: hace(6), salida: hace(1) },
-      { nt: "TKT-0007", vehiculo: vehiculos[3]._id, tarifa: tarifaCarro._id, entrada: hace(72), salida: hace(48) },
+      { nt: "TKT-0006", vehiculo: vehiculos[2]._id, tarifa: tarifaAuto._id, entrada: hace(6), salida: hace(1) },
+      { nt: "TKT-0007", vehiculo: vehiculos[3]._id, tarifa: tarifaAuto._id, entrada: hace(72), salida: hace(48) },
       { nt: "TKT-0008", vehiculo: vehiculos[8]._id, tarifa: tarifaBici._id, entrada: hace(4), salida: hace(1.5) },
     ];
 

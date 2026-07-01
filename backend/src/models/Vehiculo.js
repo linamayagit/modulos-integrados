@@ -23,7 +23,6 @@ const vehiculoSchema = new mongoose.Schema({
   },
   horaEntrada: {
     type: Date,
-    required: true,
   }
 }, { timestamps: true });
 

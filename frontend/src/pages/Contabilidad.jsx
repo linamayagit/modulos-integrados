@@ -33,18 +33,22 @@ export default function Contabilidad() {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [movimientosPorDia, setMovimientosPorDia] = useState([]);
+  const [dias, setDias] = useState(7);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const handleCloseSnackbar = () => setSnackbar((prev) => ({ ...prev, open: false }));
 
   const cargarDatos = async () => {
     try {
-      const [movimientosRes, resumenRes] = await Promise.all([
+      const [movimientosRes, resumenRes, porDiaRes] = await Promise.all([
         api.get(`/contabilidad/listar?page=${page}&limit=15`),
         api.get("/contabilidad/resumen"),
+        api.get(`/contabilidad/por-dia?dias=${dias}`),
       ]);
       setMovimientos(movimientosRes.data);
       setResumen(resumenRes.data);
+      setMovimientosPorDia(porDiaRes.data);
     } catch {
       setSnackbar({ open: true, message: "Error al cargar datos", severity: "error" });
     } finally {
@@ -54,7 +58,7 @@ export default function Contabilidad() {
 
   useEffect(() => {
     cargarDatos();
-  }, [page]);
+  }, [page, dias]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -188,6 +192,91 @@ export default function Contabilidad() {
               </Button>
             )}
           </form>
+        </CardContent>
+      </Card>
+
+      <Card style={{ marginBottom: "24px" }}>
+        <CardContent>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <h3 style={{ margin: 0, color: "#333" }}>Movimientos por día</h3>
+            <TextField
+              select
+              label="Período"
+              value={dias}
+              onChange={(e) => setDias(Number(e.target.value))}
+              style={{ minWidth: "140px" }}
+              size="small"
+            >
+              <MenuItem value={7}>Últimos 7 días</MenuItem>
+              <MenuItem value={15}>Últimos 15 días</MenuItem>
+              <MenuItem value={30}>Últimos 30 días</MenuItem>
+              <MenuItem value={90}>Últimos 90 días</MenuItem>
+            </TextField>
+          </div>
+
+          {movimientosPorDia.length === 0 ? (
+            <p style={{ color: "#999" }}>No hay movimientos en este período</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #eee" }}>
+                    <th style={{ textAlign: "left", padding: "8px", color: "#666" }}>Fecha</th>
+                    <th style={{ textAlign: "right", padding: "8px", color: "#666" }}>Ingresos</th>
+                    <th style={{ textAlign: "right", padding: "8px", color: "#666" }}>Egresos</th>
+                    <th style={{ textAlign: "right", padding: "8px", color: "#666" }}>Balance</th>
+                    <th style={{ textAlign: "center", padding: "8px", color: "#666" }}>Mov.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {movimientosPorDia.map((d) => (
+                    <tr key={d.fecha} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <td style={{ padding: "10px 8px", color: "#555", fontWeight: "bold" }}>
+                        {new Date(d.fecha + "T00:00:00").toLocaleDateString("es-CO", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td style={{ padding: "10px 8px", textAlign: "right", color: "#155724", fontWeight: "bold" }}>
+                        ${Number(d.ingresos).toLocaleString("es-CO")}
+                      </td>
+                      <td style={{ padding: "10px 8px", textAlign: "right", color: "#721c24", fontWeight: "bold" }}>
+                        ${Number(d.egresos).toLocaleString("es-CO")}
+                      </td>
+                      <td style={{
+                        padding: "10px 8px", textAlign: "right", fontWeight: "bold",
+                        color: d.balance >= 0 ? "#155724" : "#721c24",
+                      }}>
+                        {d.balance >= 0 ? "+" : ""}${Number(d.balance).toLocaleString("es-CO")}
+                      </td>
+                      <td style={{ padding: "10px 8px", textAlign: "center", color: "#666" }}>{d.cantidad}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop: "2px solid #ccc", fontWeight: "bold" }}>
+                    <td style={{ padding: "10px 8px", color: "#333" }}>Totales</td>
+                    <td style={{ padding: "10px 8px", textAlign: "right", color: "#155724" }}>
+                      ${Number(movimientosPorDia.reduce((a, d) => a + d.ingresos, 0)).toLocaleString("es-CO")}
+                    </td>
+                    <td style={{ padding: "10px 8px", textAlign: "right", color: "#721c24" }}>
+                      ${Number(movimientosPorDia.reduce((a, d) => a + d.egresos, 0)).toLocaleString("es-CO")}
+                    </td>
+                    <td style={{
+                      padding: "10px 8px", textAlign: "right",
+                      color: movimientosPorDia.reduce((a, d) => a + d.balance, 0) >= 0 ? "#155724" : "#721c24",
+                    }}>
+                      {movimientosPorDia.reduce((a, d) => a + d.balance, 0) >= 0 ? "+" : ""}
+                      ${Number(movimientosPorDia.reduce((a, d) => a + d.balance, 0)).toLocaleString("es-CO")}
+                    </td>
+                    <td style={{ padding: "10px 8px", textAlign: "center", color: "#333" }}>
+                      {movimientosPorDia.reduce((a, d) => a + d.cantidad, 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

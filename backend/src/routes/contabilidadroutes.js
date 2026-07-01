@@ -5,6 +5,7 @@ const contabilidadController = require("../controllers/contabilidadController");
 
 router.post("/registrar", authMiddleware, contabilidadController.registrarMovimiento);
 router.get("/listar", authMiddleware, contabilidadController.listarMovimientos);
+router.get("/por-dia", authMiddleware, contabilidadController.movimientosPorDia);
 router.get("/resumen", authMiddleware, contabilidadController.resumenContabilidad);
 router.put("/actualizar/:id", authMiddleware, contabilidadController.actualizarMovimiento);
 router.delete("/eliminar/:id", authMiddleware, contabilidadController.eliminarMovimiento);

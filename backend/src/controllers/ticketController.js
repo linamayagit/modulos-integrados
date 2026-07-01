@@ -1,13 +1,12 @@
 const Ticket = require("../models/ticket");
 const Vehiculo = require("../models/vehiculo");
 const Tarifa = require("../models/tarifa");
+const logger = require("../utils/logger");
 
-let contadorTicket = 1;
-
-const generarNumeroTicket = () => {
-  const num = String(contadorTicket).padStart(4, "0");
-  contadorTicket++;
-  return `TKT-${num}`;
+const generarNumeroTicket = async () => {
+  const ultimo = await Ticket.findOne().sort({ numeroTicket: -1 }).select("numeroTicket");
+  const num = ultimo ? parseInt(ultimo.numeroTicket.replace("TKT-", ""), 10) + 1 : 1;
+  return `TKT-${String(num).padStart(4, "0")}`;
 };
 
 exports.registrarTicket = async (req, res) => {
@@ -33,7 +32,7 @@ exports.registrarTicket = async (req, res) => {
       return res.status(400).json({ mensaje: "El vehículo ya tiene un ticket activo" });
     }
 
-    const numeroTicket = generarNumeroTicket();
+    const numeroTicket = await generarNumeroTicket();
 
     const nuevoTicket = new Ticket({
       numeroTicket,
@@ -49,7 +48,8 @@ exports.registrarTicket = async (req, res) => {
 
     res.status(201).json({ mensaje: "Ticket registrado", ticket: ticketConPopulate });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al registrar ticket", error });
+    logger.error("Error al registrar ticket", { error: error.message, code: error.code, errors: error.errors });
+    res.status(400).json({ mensaje: "Error al registrar ticket", error: error.message });
   }
 };
 

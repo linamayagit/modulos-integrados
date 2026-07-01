@@ -1,4 +1,5 @@
 const Parqueadero = require("../models/parqueadero");
+const Registro = require("../models/registro");
 
 exports.registrarParqueadero = async (req, res) => {
   try {
@@ -35,7 +36,18 @@ exports.listarParqueaderos = async (req, res) => {
     };
 
     const result = await Parqueadero.paginate({}, options);
-    res.json(result);
+
+    const ocupados = await Registro.countDocuments({ horaSalida: null });
+    const capacidadTotal = result.docs.reduce((sum, p) => sum + p.capacidad, 0);
+
+    res.json({
+      ...result,
+      resumen: {
+        capacidadTotal,
+        ocupados,
+        disponibles: capacidadTotal - ocupados,
+      },
+    });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al listar", error });
   }

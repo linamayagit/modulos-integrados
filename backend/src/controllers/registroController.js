@@ -48,11 +48,19 @@ exports.registrarSalida = async (req, res) => {
 
 exports.listarRegistros = async (req, res) => {
   try {
-    const { page = 1, limit = 20, activos, vehiculo } = req.query;
+    const { page = 1, limit = 20, activos, vehiculo, placa } = req.query;
 
     const filter = {};
     if (activos === "true") filter.horaSalida = null;
     if (vehiculo) filter.vehiculo = vehiculo;
+    if (placa) {
+      const vehiculos = await Vehiculo.find({ placa: { $regex: placa, $options: "i" } }).select("_id");
+      if (vehiculos.length > 0) {
+        filter.vehiculo = { $in: vehiculos.map((v) => v._id) };
+      } else {
+        filter.vehiculo = null;
+      }
+    }
 
     const options = {
       page: parseInt(page, 10),

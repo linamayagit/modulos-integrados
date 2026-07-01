@@ -42,6 +42,7 @@ export default function Registros() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [soloActivos, setSoloActivos] = useState(false);
+  const [filtroPlaca, setFiltroPlaca] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const handleCloseSnackbar = () => setSnackbar((prev) => ({ ...prev, open: false }));
@@ -51,7 +52,7 @@ export default function Registros() {
       const [vehiculosRes, activosRes, historialRes] = await Promise.all([
         api.get("/vehiculos?limit=100"),
         api.get("/registros/listar?activos=true&limit=50"),
-        api.get(`/registros/listar?page=${page}&limit=15`),
+        api.get(`/registros/listar?page=${page}&limit=15&placa=${encodeURIComponent(filtroPlaca)}`),
       ]);
 
       setVehiculos(Array.isArray(vehiculosRes.data.docs) ? vehiculosRes.data.docs : []);
@@ -66,7 +67,7 @@ export default function Registros() {
 
   useEffect(() => {
     cargarDatos();
-  }, [page]);
+  }, [page, filtroPlaca]);
 
   const handleRegistrarEntrada = async (e) => {
     e.preventDefault();
@@ -181,18 +182,29 @@ export default function Registros() {
         <div style={{ flex: "2", minWidth: "400px" }}>
           <Card>
             <CardContent>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", gap: "12px" }}>
                 <h3 style={{ margin: 0, color: "#333" }}>
                   {soloActivos ? "En el parqueadero" : "Historial de registros"}
                 </h3>
-                <Button
-                  size="small"
-                  variant={soloActivos ? "contained" : "outlined"}
-                  onClick={() => setSoloActivos(!soloActivos)}
-                  startIcon={<Search />}
-                >
-                  {soloActivos ? "Ver todos" : "Solo activos"}
-                </Button>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  {!soloActivos && (
+                    <TextField
+                      size="small"
+                      placeholder="Buscar por placa..."
+                      value={filtroPlaca}
+                      onChange={(e) => setFiltroPlaca(e.target.value)}
+                      style={{ minWidth: "180px" }}
+                    />
+                  )}
+                  <Button
+                    size="small"
+                    variant={soloActivos ? "contained" : "outlined"}
+                    onClick={() => setSoloActivos(!soloActivos)}
+                    startIcon={<Search />}
+                  >
+                    {soloActivos ? "Ver todos" : "Solo activos"}
+                  </Button>
+                </div>
               </div>
 
               {docsHistorial.length === 0 && activos.length === 0 ? (
