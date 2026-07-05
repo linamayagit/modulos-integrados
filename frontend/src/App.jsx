@@ -11,6 +11,7 @@ import Tarifas from "./pages/Tarifas";
 import Tickets from "./pages/Tickets";
 import Contabilidad from "./pages/Contabilidad";
 import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -22,13 +23,13 @@ function App() {
 
         <Route element={<Layout />}>
           <Route path="/home" element={<Home />} />
-          <Route path="/usuarios" element={<Usuarios />} />
           <Route path="/vehiculos" element={<Vehiculos />} />
           <Route path="/parqueaderos" element={<Parqueaderos />} />
           <Route path="/registros" element={<Registros />} />
-          <Route path="/tarifas" element={<Tarifas />} />
           <Route path="/tickets" element={<Tickets />} />
-          <Route path="/contabilidad" element={<Contabilidad />} />
+          <Route path="/tarifas" element={<ProtectedRoute><Tarifas /></ProtectedRoute>} />
+          <Route path="/contabilidad" element={<ProtectedRoute><Contabilidad /></ProtectedRoute>} />
+          <Route path="/usuarios" element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
         </Route>
 
       </Routes>

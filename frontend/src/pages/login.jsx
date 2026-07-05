@@ -41,6 +41,7 @@ export default function Login() {
       });
 
       localStorage.setItem("token", response.data.token);
+      localStorage.setItem("rol", response.data.usuario.rol);
       navigate("/home");
     } catch (error) {
       const mensaje = error.response?.data?.mensaje || "No se pudo conectar con el servidor";

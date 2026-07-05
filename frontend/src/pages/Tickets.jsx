@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   TextField, Button, MenuItem, Snackbar, Alert,
-  Card, CardContent, CircularProgress
+  Card, CardContent, CircularProgress, Autocomplete
 } from "@mui/material";
 import { PlayArrow, Stop, Delete, Search, ConfirmationNumber } from "@mui/icons-material";
 import api from "../services/api";
@@ -134,23 +134,18 @@ export default function Tickets() {
         <CardContent>
           <h3 style={{ margin: "0 0 16px 0", color: "#333" }}>Generar nuevo ticket</h3>
           <form onSubmit={handleGenerarTicket} style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-end" }}>
-            <TextField
-              select
-              label="Vehículo"
-              value={form.vehiculo}
-              onChange={(e) => {
-                const v = vehiculos.find((x) => x._id === e.target.value);
-                setForm({ vehiculo: e.target.value, tarifa: "", horaEntrada: form.horaEntrada });
-              }}
-              style={{ minWidth: "250px", flex: 1 }}
-            >
-              <MenuItem value="">-- Seleccionar vehículo --</MenuItem>
-              {vehiculos.map((v) => (
-                <MenuItem key={v._id} value={v._id}>
-                  {v.placa} — {v.propietario}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              options={vehiculos}
+              getOptionLabel={(v) => `${v.placa} — ${v.propietario} (${v.tipo})`}
+              value={vehiculos.find((v) => v._id === form.vehiculo) || null}
+              onChange={(_, v) => setForm({ vehiculo: v?._id || "", tarifa: "", horaEntrada: form.horaEntrada })}
+              isOptionEqualToValue={(o, v) => o._id === v._id}
+              renderInput={(params) => (
+                <TextField {...params} label="Vehículo (buscar por placa)" />
+              )}
+              style={{ minWidth: "300px", flex: 1 }}
+              noOptionsText="Sin resultados"
+            />
 
             <TextField
               select

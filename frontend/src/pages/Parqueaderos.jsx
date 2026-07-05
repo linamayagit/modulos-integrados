@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Snackbar, Alert, Card, CardContent, CircularProgress } from "@mui/material";
-import { LocalParking, DirectionsCar, CheckCircle } from "@mui/icons-material";
+import { Snackbar, Alert, Card, CardContent, CircularProgress, TextField, Button } from "@mui/material";
+import { LocalParking, DirectionsCar, CheckCircle, Edit, Save, Close } from "@mui/icons-material";
 import api from "../services/api";
 
 const colorDisponibles = (disp, total) => {
@@ -15,7 +15,36 @@ export default function Parqueaderos() {
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
+  const [editandoId, setEditandoId] = useState(null);
+  const [editandoCapacidad, setEditandoCapacidad] = useState("");
+
   const handleCloseSnackbar = () => setSnackbar((prev) => ({ ...prev, open: false }));
+
+  const handleIniciarEdicion = (p) => {
+    setEditandoId(p._id);
+    setEditandoCapacidad(String(p.capacidad));
+  };
+
+  const handleGuardar = async (id) => {
+    const val = parseInt(editandoCapacidad, 10);
+    if (!val || val < 1) {
+      setSnackbar({ open: true, message: "La capacidad debe ser al menos 1", severity: "error" });
+      return;
+    }
+    try {
+      await api.put(`/parqueaderos/actualizar/${id}`, { capacidad: val });
+      setSnackbar({ open: true, message: "Capacidad actualizada", severity: "success" });
+      setEditandoId(null);
+      await cargarDatos();
+    } catch {
+      setSnackbar({ open: true, message: "Error al actualizar capacidad", severity: "error" });
+    }
+  };
+
+  const handleCancelar = () => {
+    setEditandoId(null);
+    setEditandoCapacidad("");
+  };
 
   const cargarDatos = async () => {
     try {
@@ -90,6 +119,7 @@ export default function Parqueaderos() {
                     <th style={{ textAlign: "left", padding: "10px 8px", color: "#666" }}>Nombre</th>
                     <th style={{ textAlign: "left", padding: "10px 8px", color: "#666" }}>Dirección</th>
                     <th style={{ textAlign: "center", padding: "10px 8px", color: "#666" }}>Capacidad</th>
+                    <th style={{ textAlign: "center", padding: "10px 8px", color: "#666" }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -97,7 +127,35 @@ export default function Parqueaderos() {
                     <tr key={p._id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                       <td style={{ padding: "12px 8px", fontWeight: "bold" }}>{p.nombre}</td>
                       <td style={{ padding: "12px 8px", color: "#555" }}>{p.direccion}</td>
-                      <td style={{ padding: "12px 8px", textAlign: "center", color: "#555" }}>{p.capacidad}</td>
+                      <td style={{ padding: "12px 8px", textAlign: "center", color: "#555" }}>
+                        {editandoId === p._id ? (
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={editandoCapacidad}
+                            onChange={(e) => setEditandoCapacidad(e.target.value)}
+                            slotProps={{ htmlInput: { min: 1, style: { textAlign: "center", width: "70px" } } }}
+                          />
+                        ) : (
+                          p.capacidad
+                        )}
+                      </td>
+                      <td style={{ padding: "12px 8px", textAlign: "center" }}>
+                        {editandoId === p._id ? (
+                          <>
+                            <Button size="small" variant="contained" color="success" startIcon={<Save />} onClick={() => handleGuardar(p._id)} sx={{ mr: 1 }}>
+                              Guardar
+                            </Button>
+                            <Button size="small" variant="outlined" startIcon={<Close />} onClick={handleCancelar}>
+                              Cancelar
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => handleIniciarEdicion(p)}>
+                            Editar
+                          </Button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

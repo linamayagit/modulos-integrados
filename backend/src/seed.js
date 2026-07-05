@@ -50,7 +50,7 @@ async function seed() {
 
     // ── Parqueaderos ──
     const parqueaderos = await Parqueadero.insertMany([
-      { nombre: "Parqueadero Principal", direccion: "Calle 50 #20-30", capacidad: 300 },
+      { nombre: "Parqueadero Principal", direccion: "Calle 50 #20-30", capacidad: 100 },
     ]);
     console.log(`🏢 ${parqueaderos.length} parqueadero creado`);
 

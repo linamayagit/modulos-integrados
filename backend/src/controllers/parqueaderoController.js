@@ -56,22 +56,32 @@ exports.listarParqueaderos = async (req, res) => {
 exports.actualizarParqueadero = async (req, res) => {
   try {
     const { nombre, direccion, capacidad } = req.body;
+    const update = {};
 
-    if (!nombre || !direccion || capacidad == null) {
-      return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
-    }
-    if (capacidad < 1) {
-      return res.status(400).json({ mensaje: "La capacidad debe ser al menos 1" });
+    if (nombre !== undefined) {
+      if (!nombre) return res.status(400).json({ mensaje: "El nombre no puede estar vacío" });
+      const duplicado = await Parqueadero.findOne({ nombre, _id: { $ne: req.params.id } });
+      if (duplicado) return res.status(400).json({ mensaje: "Ya existe otro parqueadero con ese nombre" });
+      update.nombre = nombre;
     }
 
-    const duplicado = await Parqueadero.findOne({ nombre, _id: { $ne: req.params.id } });
-    if (duplicado) {
-      return res.status(400).json({ mensaje: "Ya existe otro parqueadero con ese nombre" });
+    if (direccion !== undefined) {
+      if (!direccion) return res.status(400).json({ mensaje: "La dirección no puede estar vacía" });
+      update.direccion = direccion;
+    }
+
+    if (capacidad !== undefined) {
+      if (capacidad < 1) return res.status(400).json({ mensaje: "La capacidad debe ser al menos 1" });
+      update.capacidad = capacidad;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ mensaje: "No hay campos para actualizar" });
     }
 
     const parqueadero = await Parqueadero.findByIdAndUpdate(
       req.params.id,
-      { nombre, direccion, capacidad },
+      update,
       { new: true, runValidators: true }
     );
     if (!parqueadero) return res.status(404).json({ mensaje: "Parqueadero no encontrado" });

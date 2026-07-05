@@ -1,6 +1,8 @@
 const Ticket = require("../models/ticket");
 const Vehiculo = require("../models/vehiculo");
 const Tarifa = require("../models/tarifa");
+const Registro = require("../models/registro");
+const Contabilidad = require("../models/contabilidad");
 const logger = require("../utils/logger");
 
 const generarNumeroTicket = async () => {
@@ -42,6 +44,16 @@ exports.registrarTicket = async (req, res) => {
     });
     await nuevoTicket.save();
 
+    const horaEntradaTicket = nuevoTicket.horaEntrada;
+
+    const nuevoRegistro = new Registro({
+      vehiculo: vehiculoId,
+      horaEntrada: horaEntradaTicket,
+      ticket: nuevoTicket._id,
+      observaciones: `Generado desde ticket ${numeroTicket}`,
+    });
+    await nuevoRegistro.save();
+
     const ticketConPopulate = await Ticket.findById(nuevoTicket._id)
       .populate("vehiculo")
       .populate("tarifa");
@@ -77,7 +89,7 @@ exports.listarTickets = async (req, res) => {
 exports.finalizarTicket = async (req, res) => {
   try {
     const { id } = req.params;
-    const ticket = await Ticket.findById(id).populate("tarifa");
+    const ticket = await Ticket.findById(id).populate("tarifa").populate("vehiculo");
     if (!ticket) return res.status(404).json({ mensaje: "Ticket no encontrado" });
     if (ticket.horaSalida) return res.status(400).json({ mensaje: "Este ticket ya está finalizado" });
 
@@ -93,6 +105,20 @@ exports.finalizarTicket = async (req, res) => {
       : horas * ticket.tarifa.precioHora;
 
     await ticket.save();
+
+    await Registro.findOneAndUpdate(
+      { ticket: ticket._id, horaSalida: null },
+      { horaSalida: ticket.horaSalida }
+    );
+
+    await Contabilidad.create({
+      tipo: "Ingreso",
+      monto: ticket.total,
+      descripcion: `Recaudo ${ticket.numeroTicket} - ${ticket.vehiculo.placa}`,
+      fecha: ticket.horaSalida,
+      responsable: req.usuario?.correo || "Sistema",
+    });
+
     res.json({ mensaje: "Ticket finalizado", ticket });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al finalizar ticket", error });
